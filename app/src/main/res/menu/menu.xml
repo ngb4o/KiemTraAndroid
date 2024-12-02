@@ -2,7 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/action_department"
+        android:title="Quản lý Khoa"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_add"
-        android:title="Thêm mới"
-        app:showAsAction="always" />
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="Thêm Sinh viên"
+        app:showAsAction="ifRoom" />
 </menu>

@@ -24,11 +24,15 @@ public class AddStudentActivity extends AppCompatActivity {
     private Spinner spinnerKhoa;
     private RadioGroup radioGroupGender;
     private TextView edtNgaySinh;
+    private DatabaseHelper dbHelper;
+    private List<Department> departmentList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_student);
+
+        dbHelper = new DatabaseHelper(this);
 
         edtHoTen = findViewById(R.id.edtHoTen);
         edtMaSV = findViewById(R.id.edtMaSV);
@@ -38,20 +42,35 @@ public class AddStudentActivity extends AppCompatActivity {
         spinnerKhoa = findViewById(R.id.spinnerKhoa);
         radioGroupGender = findViewById(R.id.radioGroupGender);
 
-        List<String> khoaList = new ArrayList<>();
-        khoaList.add("Khoa");
-        khoaList.add("Khoa CMU");
-        khoaList.add("Khoa PSU");
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, khoaList);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerKhoa.setAdapter(adapter);
+        // Setup spinner with departments from database
+        setupDepartmentSpinner();
 
         // Set up the date picker
         edtNgaySinh.setOnClickListener(view -> showDatePicker());
 
         Button btnNhap = findViewById(R.id.btnNhap);
         btnNhap.setOnClickListener(view -> saveStudentData());
+    }
+
+    private void setupDepartmentSpinner() {
+        departmentList = dbHelper.getAllDepartments();
+        List<String> departmentNames = new ArrayList<>();
+
+        for (Department department : departmentList) {
+            departmentNames.add(department.getName());
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, 
+            android.R.layout.simple_spinner_item, departmentNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerKhoa.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh department list when activity resumes
+        setupDepartmentSpinner();
     }
 
     private void showDatePicker() {
@@ -108,7 +127,7 @@ public class AddStudentActivity extends AppCompatActivity {
             return;
         }
 
-        if (department.equals("Khoa")) {
+        if (spinnerKhoa.getSelectedItemPosition() == -1) {
             Toast.makeText(this, "Vui lòng chọn khoa", Toast.LENGTH_SHORT).show();
             return;
         }

@@ -1,5 +1,7 @@
 package cr424ak.nguyengiabao.kiemtra2;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,10 +28,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentV
     @Override
     public void onBindViewHolder(@NonNull StudentViewHolder holder, int position) {
         Student student = studentList.get(position);
-
-        holder.name.setText(student.getName());
-        holder.phoneNumber.setText("Số điện thoại: " + student.getPhoneNumber());
-        holder.studentIdAndDepartment.setText("Mã SV: " + student.getStudentId() + " - " + student.getDepartment());
+        holder.bindStudent(student);
     }
 
     @Override
@@ -45,6 +44,36 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentV
             name = itemView.findViewById(R.id.txtName);
             phoneNumber = itemView.findViewById(R.id.txtPhoneNumber);
             studentIdAndDepartment = itemView.findViewById(R.id.txtStudentIdAndDepartment);
+        }
+
+        public void bindStudent(Student student) {
+            name.setText(student.getName());
+            phoneNumber.setText("Số điện thoại: " + student.getPhoneNumber());
+            studentIdAndDepartment.setText("Mã SV: " + student.getStudentId() + " - " + student.getDepartment());
+            
+            itemView.findViewById(R.id.btnCall).setOnClickListener(v -> {
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                intent.setData(Uri.parse("tel:" + student.getPhoneNumber()));
+                itemView.getContext().startActivity(intent);
+            });
+
+            itemView.findViewById(R.id.btnEmail).setOnClickListener(v -> {
+                Intent intent = new Intent(Intent.ACTION_SENDTO);
+                intent.setData(Uri.parse("mailto:" + student.getEmail()));
+                itemView.getContext().startActivity(intent);
+            });
+
+            itemView.findViewById(R.id.btnShare).setOnClickListener(v -> {
+                String shareText = "Thông tin sinh viên:\n" +
+                        "Tên: " + student.getName() + "\n" +
+                        "MSSV: " + student.getStudentId() + "\n" +
+                        "Khoa: " + student.getDepartment();
+                
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("text/plain");
+                shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+                itemView.getContext().startActivity(Intent.createChooser(shareIntent, "Chia sẻ qua"));
+            });
         }
     }
 }

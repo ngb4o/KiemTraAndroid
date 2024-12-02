@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
@@ -20,15 +21,21 @@ public class MainActivity extends AppCompatActivity {
     private List<Student> studentList;
     private List<Student> studentListFull;
     private SearchView searchView;
+    private DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        dbHelper = new DatabaseHelper(this);
+        
         recyclerView = findViewById(R.id.recyclerView);
+        
         studentList = new ArrayList<>();
         studentListFull = new ArrayList<>();
+        loadStudentsFromDatabase();
+        
         studentAdapter = new StudentAdapter(studentList);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -42,16 +49,43 @@ public class MainActivity extends AppCompatActivity {
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                filterList(query);
+                List<Student> searchResults = dbHelper.searchStudents(query);
+                studentList.clear();
+                studentList.addAll(searchResults);
+                studentAdapter.notifyDataSetChanged();
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                filterList(newText);
+                if (newText.isEmpty()) {
+                    studentList.clear();
+                    studentList.addAll(dbHelper.getAllStudents());
+                } else {
+                    List<Student> searchResults = dbHelper.searchStudents(newText);
+                    studentList.clear();
+                    studentList.addAll(searchResults);
+                }
+                studentAdapter.notifyDataSetChanged();
                 return false;
             }
         });
+    }
+
+    private void loadStudentsFromDatabase() {
+        studentList.clear();
+        studentListFull.clear();
+        
+        List<Student> students = dbHelper.getAllStudents();
+        studentList.addAll(students);
+        studentListFull.addAll(students);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadStudentsFromDatabase();
+        studentAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -62,9 +96,14 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_add) {
+        int id = item.getItemId();
+        if (id == R.id.action_add) {
             Intent intent = new Intent(MainActivity.this, AddStudentActivity.class);
             startActivityForResult(intent, 1);
+            return true;
+        } else if (id == R.id.action_department) {
+            Intent intent = new Intent(MainActivity.this, DepartmentActivity.class);
+            startActivity(intent);
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -75,22 +114,15 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
             Student newStudent = (Student) data.getSerializableExtra("student");
-            studentList.add(newStudent);
-            studentListFull.add(newStudent);
-            studentAdapter.notifyDataSetChanged();
-        }
-    }
-
-    private void filterList(String query) {
-        List<Student> filteredList = new ArrayList<>();
-        for (Student student : studentListFull) {
-            if (student.getName().toLowerCase().contains(query.toLowerCase())) {
-                filteredList.add(student);
+            long result = dbHelper.addStudent(newStudent);
+            if (result != -1) {
+                studentList.clear();
+                studentList.addAll(dbHelper.getAllStudents());
+                studentAdapter.notifyDataSetChanged();
+                Toast.makeText(this, "Thêm sinh viên thành công", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Lỗi khi thêm sinh viên", Toast.LENGTH_SHORT).show();
             }
         }
-
-        studentList.clear();
-        studentList.addAll(filteredList);
-        studentAdapter.notifyDataSetChanged();
     }
 }
