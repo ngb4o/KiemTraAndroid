@@ -30,6 +30,9 @@
         <activity
             android:name=".DepartmentActivity"
             android:exported="false" />
+        <activity
+            android:name=".DepartmentStudentsActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

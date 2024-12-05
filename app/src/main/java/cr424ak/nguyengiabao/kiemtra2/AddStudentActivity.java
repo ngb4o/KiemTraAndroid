@@ -88,65 +88,110 @@ public class AddStudentActivity extends AppCompatActivity {
         datePickerDialog.show();
     }
 
+    private boolean isValidPhoneNumber(String phoneNumber) {
+        // Kiểm tra số điện thoại Việt Nam (10 số, bắt đầu bằng 0)
+        String phonePattern = "^0\\d{9}$";
+        return phoneNumber.matches(phonePattern);
+    }
+
+    private boolean isValidEmail(String email) {
+        // Kiểm tra định dạng email cơ bản
+        String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+        return email.matches(emailPattern);
+    }
+
     private void saveStudentData() {
-        String name = edtHoTen.getText().toString();
-        String studentId = edtMaSV.getText().toString();
-        String phoneNumber = edtSDT.getText().toString();
-        String email = edtEmail.getText().toString();
-        String birthDate = edtNgaySinh.getText().toString(); // Get the formatted date
+        String name = edtHoTen.getText().toString().trim();
+        String studentId = edtMaSV.getText().toString().trim();
+        String phoneNumber = edtSDT.getText().toString().trim();
+        String email = edtEmail.getText().toString().trim();
+        String birthDate = edtNgaySinh.getText().toString().trim();
         String department = spinnerKhoa.getSelectedItem().toString();
 
-        // Validation checks...
+        // Validation checks
+        boolean hasError = false;
+
         if (name.isEmpty()) {
             edtHoTen.setError("Vui lòng nhập họ và tên");
             edtHoTen.requestFocus();
-            return;
+            hasError = true;
         }
 
         if (studentId.isEmpty()) {
             edtMaSV.setError("Vui lòng nhập mã sinh viên");
-            edtMaSV.requestFocus();
-            return;
+            if (!hasError) {
+                edtMaSV.requestFocus();
+                hasError = true;
+            }
         }
 
         if (phoneNumber.isEmpty()) {
             edtSDT.setError("Vui lòng nhập số điện thoại");
-            edtSDT.requestFocus();
-            return;
+            if (!hasError) {
+                edtSDT.requestFocus();
+                hasError = true;
+            }
+        } else if (!isValidPhoneNumber(phoneNumber)) {
+            edtSDT.setError("Số điện thoại không hợp lệ (phải có 10 số và bắt đầu bằng số 0)");
+            if (!hasError) {
+                edtSDT.requestFocus();
+                hasError = true;
+            }
         }
 
         if (email.isEmpty()) {
             edtEmail.setError("Vui lòng nhập email");
-            edtEmail.requestFocus();
-            return;
+            if (!hasError) {
+                edtEmail.requestFocus();
+                hasError = true;
+            }
+        } else if (!isValidEmail(email)) {
+            edtEmail.setError("Email không hợp lệ");
+            if (!hasError) {
+                edtEmail.requestFocus();
+                hasError = true;
+            }
         }
 
         if (birthDate.isEmpty()) {
-            edtNgaySinh.setError("Vui lòng nhập ngày sinh");
-            edtNgaySinh.requestFocus();
-            return;
+            Toast.makeText(this, "Vui lòng chọn ngày sinh", Toast.LENGTH_SHORT).show();
+            hasError = true;
         }
 
         if (spinnerKhoa.getSelectedItemPosition() == -1) {
             Toast.makeText(this, "Vui lòng chọn khoa", Toast.LENGTH_SHORT).show();
-            return;
+            hasError = true;
         }
 
         int selectedGenderId = radioGroupGender.getCheckedRadioButtonId();
         if (selectedGenderId == -1) {
             Toast.makeText(this, "Vui lòng chọn giới tính", Toast.LENGTH_SHORT).show();
+            hasError = true;
+        }
+
+        if (hasError) {
             return;
         }
 
+        // Nếu tất cả validation đều pass
         RadioButton selectedGenderButton = findViewById(selectedGenderId);
         String gender = selectedGenderButton.getText().toString();
 
-        // Create Student object and proceed
-        Student student = new Student(name, studentId, phoneNumber, email, birthDate, department, gender);
+        try {
+            // Kiểm tra xem mã sinh viên đã tồn tại chưa
+            if (dbHelper.isStudentIdExists(studentId)) {
+                edtMaSV.setError("Mã sinh viên đã tồn tại");
+                edtMaSV.requestFocus();
+                return;
+            }
 
-        Intent resultIntent = new Intent();
-        resultIntent.putExtra("student", student);
-        setResult(RESULT_OK, resultIntent);
-        finish();
+            Student student = new Student(name, studentId, phoneNumber, email, birthDate, department, gender);
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("student", student);
+            setResult(RESULT_OK, resultIntent);
+            finish();
+        } catch (Exception e) {
+            Toast.makeText(this, "Có lỗi xảy ra: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 }

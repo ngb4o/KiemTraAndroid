@@ -209,4 +209,38 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return departments;
     }
+
+    public boolean deleteStudent(String studentId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(TABLE_STUDENT, KEY_STUDENT_ID + "=?", new String[]{studentId}) > 0;
+    }
+
+    public boolean deleteDepartment(int departmentId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        // Kiểm tra xem có sinh viên nào trong khoa không
+        Cursor cursor = db.query(TABLE_STUDENT, null, 
+            KEY_DEPARTMENT + "=?", 
+            new String[]{String.valueOf(departmentId)}, 
+            null, null, null);
+        
+        if (cursor.getCount() > 0) {
+            cursor.close();
+            return false; // Không thể xóa vì còn sinh viên trong khoa
+        }
+        cursor.close();
+        return db.delete(TABLE_DEPARTMENT, KEY_ID + "=?", new String[]{String.valueOf(departmentId)}) > 0;
+    }
+
+    public boolean isStudentIdExists(String studentId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_STUDENT, 
+            new String[]{KEY_STUDENT_ID}, 
+            KEY_STUDENT_ID + "=?",
+            new String[]{studentId}, 
+            null, null, null);
+        
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
 }

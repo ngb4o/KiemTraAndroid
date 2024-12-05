@@ -1,18 +1,24 @@
 package cr424ak.nguyengiabao.kiemtra2;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentViewHolder> {
 
     private List<Student> studentList;
+    private Context context;
+    private DatabaseHelper dbHelper;
 
     public StudentAdapter(List<Student> studentList) {
         this.studentList = studentList;
@@ -29,6 +35,22 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentV
     public void onBindViewHolder(@NonNull StudentViewHolder holder, int position) {
         Student student = studentList.get(position);
         holder.bindStudent(student);
+        
+        holder.itemView.findViewById(R.id.btnDelete).setOnClickListener(v -> {
+            new AlertDialog.Builder(v.getContext())
+                .setTitle("Xác nhận xóa")
+                .setMessage("Bạn có chắc muốn xóa sinh viên này?")
+                .setPositiveButton("Xóa", (dialog, which) -> {
+                    DatabaseHelper dbHelper = new DatabaseHelper(v.getContext());
+                    if (dbHelper.deleteStudent(student.getStudentId())) {
+                        studentList.remove(position);
+                        notifyItemRemoved(position);
+                        Toast.makeText(v.getContext(), "Đã xóa sinh viên", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+        });
     }
 
     @Override
