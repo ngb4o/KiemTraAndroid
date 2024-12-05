@@ -44,30 +44,29 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Thiết lập SearchView bên ngoài Toolbar
+        // Cập nhật cấu hình SearchView
         searchView = findViewById(R.id.searchView);
+        searchView.setQueryHint("Tìm theo tên, mã SV, SĐT hoặc khoa");
+        searchView.setIconifiedByDefault(false); // Luôn hiển thị thanh tìm kiếm
+        
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                List<Student> searchResults = dbHelper.searchStudents(query);
-                studentList.clear();
-                studentList.addAll(searchResults);
-                studentAdapter.notifyDataSetChanged();
-                return false;
+                performSearch(query);
+                return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                if (newText.isEmpty()) {
+                if (newText.length() >= 1) {
+                    performSearch(newText);
+                } else {
+                    // Nếu ô tìm kiếm trống, hiển thị lại toàn bộ danh sách
                     studentList.clear();
                     studentList.addAll(dbHelper.getAllStudents());
-                } else {
-                    List<Student> searchResults = dbHelper.searchStudents(newText);
-                    studentList.clear();
-                    studentList.addAll(searchResults);
+                    studentAdapter.notifyDataSetChanged();
                 }
-                studentAdapter.notifyDataSetChanged();
-                return false;
+                return true;
             }
         });
     }
@@ -112,17 +111,43 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
-            Student newStudent = (Student) data.getSerializableExtra("student");
-            long result = dbHelper.addStudent(newStudent);
-            if (result != -1) {
-                studentList.clear();
-                studentList.addAll(dbHelper.getAllStudents());
-                studentAdapter.notifyDataSetChanged();
-                Toast.makeText(this, "Thêm sinh viên thành công", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Lỗi khi thêm sinh viên", Toast.LENGTH_SHORT).show();
+        if (resultCode == RESULT_OK && data != null) {
+            Student student = (Student) data.getSerializableExtra("student");
+            if (requestCode == 1) { // Thêm mới
+                long result = dbHelper.addStudent(student);
+                if (result != -1) {
+                    loadStudentsFromDatabase();
+                    Toast.makeText(this, "Thêm sinh viên thành công", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Lỗi khi thêm sinh viên", Toast.LENGTH_SHORT).show();
+                }
+            } else if (requestCode == 2) { // Cập nhật
+                if (dbHelper.updateStudent(student)) {
+                    loadStudentsFromDatabase();
+                    Toast.makeText(this, "Cập nhật sinh viên thành công", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Lỗi khi cập nhật sinh viên", Toast.LENGTH_SHORT).show();
+                }
             }
         }
+    }
+
+    private void performSearch(String query) {
+        if (query.isEmpty()) {
+            studentList.clear();
+            studentList.addAll(dbHelper.getAllStudents());
+        } else {
+            List<Student> searchResults = dbHelper.searchStudents(query);
+            studentList.clear();
+            studentList.addAll(searchResults);
+            
+            // Hiển thị thông báo kết quả tìm kiếm
+            if (searchResults.isEmpty()) {
+                Toast.makeText(this, "Không tìm thấy kết quả phù hợp", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Tìm thấy " + searchResults.size() + " kết quả", Toast.LENGTH_SHORT).show();
+            }
+        }
+        studentAdapter.notifyDataSetChanged();
     }
 }

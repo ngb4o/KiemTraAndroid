@@ -26,6 +26,8 @@ public class AddStudentActivity extends AppCompatActivity {
     private TextView edtNgaySinh;
     private DatabaseHelper dbHelper;
     private List<Department> departmentList;
+    private boolean isEdit = false;
+    private Student currentStudent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +52,36 @@ public class AddStudentActivity extends AppCompatActivity {
 
         Button btnNhap = findViewById(R.id.btnNhap);
         btnNhap.setOnClickListener(view -> saveStudentData());
+
+        // Kiểm tra xem là thêm mới hay cập nhật
+        isEdit = getIntent().getBooleanExtra("isEdit", false);
+        if (isEdit) {
+            currentStudent = (Student) getIntent().getSerializableExtra("student");
+            if (currentStudent != null) {
+                // Điền thông tin sinh viên vào form
+                edtHoTen.setText(currentStudent.getName());
+                edtMaSV.setText(currentStudent.getStudentId());
+                edtMaSV.setEnabled(false); // Không cho phép sửa mã sinh viên
+                edtSDT.setText(currentStudent.getPhoneNumber());
+                edtEmail.setText(currentStudent.getEmail());
+                edtNgaySinh.setText(currentStudent.getBirthDate());
+                
+                // Set spinner selection
+                ArrayAdapter<String> adapter = (ArrayAdapter<String>) spinnerKhoa.getAdapter();
+                int position = adapter.getPosition(currentStudent.getDepartment());
+                spinnerKhoa.setSelection(position);
+                
+                // Set gender selection
+                if ("Nam".equals(currentStudent.getGender())) {
+                    ((RadioButton)findViewById(R.id.rdNam)).setChecked(true);
+                } else {
+                    ((RadioButton)findViewById(R.id.rdNu)).setChecked(true);
+                }
+                
+                // Đổi text của button
+                btnNhap.setText("Cập nhật");
+            }
+        }
     }
 
     private void setupDepartmentSpinner() {
@@ -178,18 +210,29 @@ public class AddStudentActivity extends AppCompatActivity {
         String gender = selectedGenderButton.getText().toString();
 
         try {
-            // Kiểm tra xem mã sinh viên đã tồn tại chưa
-            if (dbHelper.isStudentIdExists(studentId)) {
-                edtMaSV.setError("Mã sinh viên đã tồn tại");
-                edtMaSV.requestFocus();
-                return;
-            }
-
             Student student = new Student(name, studentId, phoneNumber, email, birthDate, department, gender);
             Intent resultIntent = new Intent();
             resultIntent.putExtra("student", student);
-            setResult(RESULT_OK, resultIntent);
-            finish();
+            
+            if (isEdit) {
+                // Cập nhật sinh viên
+                if (dbHelper.updateStudent(student)) {
+                    setResult(RESULT_OK, resultIntent);
+                    Toast.makeText(this, "Cập nhật thành công", Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    Toast.makeText(this, "Lỗi khi cập nhật", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                // Thêm mới sinh viên
+                if (dbHelper.isStudentIdExists(studentId)) {
+                    edtMaSV.setError("Mã sinh viên đã tồn tại");
+                    edtMaSV.requestFocus();
+                    return;
+                }
+                setResult(RESULT_OK, resultIntent);
+                finish();
+            }
         } catch (Exception e) {
             Toast.makeText(this, "Có lỗi xảy ra: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }

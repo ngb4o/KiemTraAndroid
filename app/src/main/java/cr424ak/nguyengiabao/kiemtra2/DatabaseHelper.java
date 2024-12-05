@@ -117,15 +117,26 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         List<Student> studentList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
+        // Tìm kiếm theo tên, mã SV, SĐT hoặc khoa
         String selectQuery = "SELECT * FROM " + TABLE_STUDENT + 
-                           " WHERE " + KEY_NAME + " LIKE ? OR " + 
-                           KEY_STUDENT_ID + " LIKE ?";
-        Cursor cursor = db.rawQuery(selectQuery, 
-                                  new String[]{"%" + query + "%", "%" + query + "%"});
+                            " WHERE " + KEY_NAME + " LIKE ? OR " + 
+                            KEY_STUDENT_ID + " LIKE ? OR " +
+                            KEY_PHONE + " LIKE ? OR " +
+                            KEY_DEPARTMENT + " LIKE ?";
+                            
+        String searchPattern = "%" + query + "%";
+        String[] selectionArgs = new String[]{
+            searchPattern, 
+            searchPattern, 
+            searchPattern, 
+            searchPattern
+        };
+
+        Cursor cursor = db.rawQuery(selectQuery, selectionArgs);
 
         if (cursor.moveToFirst()) {
             do {
-                Student student = new Student(
+                @SuppressLint("Range") Student student = new Student(
                     cursor.getString(cursor.getColumnIndex(KEY_NAME)),
                     cursor.getString(cursor.getColumnIndex(KEY_STUDENT_ID)),
                     cursor.getString(cursor.getColumnIndex(KEY_PHONE)),
@@ -242,5 +253,26 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         boolean exists = cursor.getCount() > 0;
         cursor.close();
         return exists;
+    }
+
+    public boolean updateStudent(Student student) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put(KEY_NAME, student.getName());
+        values.put(KEY_PHONE, student.getPhoneNumber());
+        values.put(KEY_EMAIL, student.getEmail());
+        values.put(KEY_BIRTH_DATE, student.getBirthDate());
+        values.put(KEY_DEPARTMENT, student.getDepartment());
+        values.put(KEY_GENDER, student.getGender());
+
+        // Cập nhật theo mã sinh viên
+        int result = db.update(TABLE_STUDENT, 
+            values, 
+            KEY_STUDENT_ID + "=?", 
+            new String[]{student.getStudentId()});
+        
+        db.close();
+        return result > 0;
     }
 }

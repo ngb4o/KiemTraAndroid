@@ -21,11 +21,14 @@
         android:id="@+id/searchView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:queryHint="Tìm kiếm"
+        android:layout_margin="8dp"
+        android:background="@drawable/search_background"
+        android:queryHint="Tìm theo tên, mã SV, SĐT hoặc khoa"
+        app:iconifiedByDefault="false"
+        app:queryBackground="@null"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_margin="8dp" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

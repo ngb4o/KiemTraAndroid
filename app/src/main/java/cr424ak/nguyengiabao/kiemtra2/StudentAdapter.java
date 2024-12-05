@@ -1,5 +1,6 @@
 package cr424ak.nguyengiabao.kiemtra2;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -50,6 +51,13 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentV
                 })
                 .setNegativeButton("Hủy", null)
                 .show();
+        });
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), AddStudentActivity.class);
+            intent.putExtra("student", student);
+            intent.putExtra("isEdit", true);
+            ((Activity) v.getContext()).startActivityForResult(intent, 2);
         });
     }
 
