@@ -2,8 +2,6 @@ package cr424ak.nguyengiabao.kiemtra2;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -69,6 +67,17 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+
+        // Thêm xử lý cho FABs
+        findViewById(R.id.fabAddStudent).setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, AddStudentActivity.class);
+            startActivityForResult(intent, 1);
+        });
+
+        findViewById(R.id.fabDepartment).setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, DepartmentActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void loadStudentsFromDatabase() {
@@ -85,27 +94,6 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         loadStudentsFromDatabase();
         studentAdapter.notifyDataSetChanged();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_add) {
-            Intent intent = new Intent(MainActivity.this, AddStudentActivity.class);
-            startActivityForResult(intent, 1);
-            return true;
-        } else if (id == R.id.action_department) {
-            Intent intent = new Intent(MainActivity.this, DepartmentActivity.class);
-            startActivity(intent);
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
